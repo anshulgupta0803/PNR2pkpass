@@ -1,0 +1,17 @@
+#!/bin/bash
+
+(
+echo "0"
+file=`yad --geometry=+660+300 --file-selection`
+echo "25"
+pdftk "$file" cat 1 output /tmp/singlePage.pdf
+convert -density 300 -crop 185x185+1920+418 /tmp/singlePage.pdf /tmp/QR.png
+echo "50"
+zbarimg -q /tmp/QR.png | sed 's/QR-Code://g' > /tmp/data_raw
+cat /tmp/data_raw | qrencode -s 10 -o /tmp/enhancedQR.png
+echo "75"
+cat /tmp/data_raw | sed 's/^[ \t]*//' | sed 's/: /:/g' | sed 's/ ,//g' | sed 's/,//g' | awk -F':' '{print $1","$2$3}' > /tmp/data.csv
+echo "100"
+) | yad --geometry=250x100+400+400 --progress --text="PNR Status" --auto-close
+yad --geometry=300x400+550+200 --title="PNR Information" --window-icon=/tmp/QR.png --wrap --margins=10 --text-info --filename=/tmp/data.csv
+rm /tmp/data.csv /tmp/data_raw /tmp/QR.png /tmp/enhancedQR.png /tmp/singlePage.pdf
